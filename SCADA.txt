@@ -1,0 +1,143 @@
+#include <DHT.h>
+
+#define TRIG_PIN 5
+#define ECHO_PIN 18
+
+#define DHTPIN 15
+#define DHTTYPE DHT22
+
+#define GREEN_LED 19
+#define RED_LED 21
+
+#define BUZZER 22
+#define RELAY 23
+
+DHT dht(DHTPIN, DHTTYPE);
+
+// Tank height in cm
+const float tankHeight = 20.0;
+
+void setup() {
+  Serial.begin(115200);
+
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+
+  pinMode(GREEN_LED, OUTPUT);
+  pinMode(RED_LED, OUTPUT);
+
+  pinMode(BUZZER, OUTPUT);
+  pinMode(RELAY, OUTPUT);
+
+  dht.begin();
+
+  Serial.println("Industrial SCADA Interface Started");
+}
+
+void loop() {
+
+  // ===== Ultrasonic Reading =====
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(5);
+
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+
+  digitalWrite(TRIG_PIN, LOW);
+
+  long duration = pulseIn(ECHO_PIN, HIGH, 30000);
+
+  float distance = duration * 0.0343 / 2.0;
+
+  // If sensor fails
+  if (duration == 0) {
+    Serial.println("Ultrasonic Sensor Not Detected!");
+    delay(1000);
+    return;
+  }
+
+  // Water level %
+  float waterLevel = ((tankHeight - distance) / tankHeight) * 100.0;
+
+  // Limit between 0 and 100
+  if (waterLevel < 0) waterLevel = 0;
+  if (waterLevel > 100) waterLevel = 100;
+
+  // ===== DHT22 Reading =====
+  float temperature = dht.readTemperature();
+  float humidity = dht.readHumidity();
+
+  Serial.println("--------------------------------");
+
+  Serial.print("Distance: ");
+  Serial.print(distance);
+  Serial.println(" cm");
+
+  Serial.print("Water Level: ");
+  Serial.print(waterLevel);
+  Serial.println(" %");
+
+  Serial.print("Temperature: ");
+  Serial.print(temperature);
+  Serial.println(" C");
+
+  Serial.print("Humidity: ");
+  Serial.print(humidity);
+  Serial.println(" %");
+
+  // ===== SCADA Logic =====
+
+  // High Temperature Alarm
+  if (temperature > 35) {
+
+    Serial.println("STATUS : HIGH TEMPERATURE");
+
+    digitalWrite(GREEN_LED, LOW);
+    digitalWrite(RED_LED, HIGH);
+
+    digitalWrite(BUZZER, HIGH);
+
+    digitalWrite(RELAY, LOW);
+  }
+
+  // Low Tank Level
+  else if (waterLevel < 30) {
+
+    Serial.println("STATUS : TANK LOW");
+
+    digitalWrite(GREEN_LED, HIGH);
+    digitalWrite(RED_LED, LOW);
+
+    digitalWrite(BUZZER, LOW);
+
+    digitalWrite(RELAY, HIGH);
+  }
+
+  // Tank Full
+  else if (waterLevel > 70) {
+
+    Serial.println("STATUS : TANK FULL");
+
+    digitalWrite(GREEN_LED, HIGH);
+    digitalWrite(RED_LED, LOW);
+
+    digitalWrite(BUZZER, LOW);
+
+    digitalWrite(RELAY, LOW);
+  }
+
+  // Normal
+  else {
+
+    Serial.println("STATUS : NORMAL");
+
+    digitalWrite(GREEN_LED, HIGH);
+    digitalWrite(RED_LED, LOW);
+
+    digitalWrite(BUZZER, LOW);
+
+    digitalWrite(RELAY, LOW);
+  }
+
+  delay(2000);
+}
