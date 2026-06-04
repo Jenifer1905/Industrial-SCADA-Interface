@@ -3,9 +3,9 @@
 
 **Project Title:** Industrial SCADA Interface Using ESP32
 
-**Intern Name:** __Jenifer J__________________
+**Intern Name:** __Jenifer J__
 
-**Intern ID:** ____________CITS2086__________
+**Intern ID:**__________CITS2086__________
 
 
 ---
