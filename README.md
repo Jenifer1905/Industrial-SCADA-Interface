@@ -134,5 +134,4 @@ The Industrial SCADA Interface using ESP32 successfully demonstrates industrial 
 
 ---
 
-### Repository Structure
 
